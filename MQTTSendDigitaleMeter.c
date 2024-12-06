@@ -7,7 +7,7 @@
 
 #define DEBUG
 
-#define FILE_NAME		"./DigitaleMeter_temp.txt"
+#define FILE_NAME		"./DigitaleMeter_test.txt"
 #define MAX_LINE_LEN	2048
 
 #define ADDRESS     "tcp://192.168.0.103:1883"  // Local RP MQTT broker address

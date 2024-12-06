@@ -2,9 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <MQTTClient.h>
-#include "include.h"            //file with #includes
 
+#define MAX_LINE_LEN	2048
+
+#define ADDRESS     "tcp://192.168.0.103:1883"  // Local RP MQTT broker address
+#define CLIENTID    "CFileReaderClient"
+#define TOPIC       "P1/MD10"            // Replace with your topic
+#define QOS         1
+#define TIMEOUT     10000L
 volatile MQTTClient_deliveryToken deliveredtoken;
+float tarief, actueel_sp, actueel_sv;
+float totaal_dagv, totaal_nachtv, totaal_dago, totaal_nachto, totaal_v = 0, totaal_o = 0, totaal_g = 0, totaal_gas;
+char time[30]
+int i = 0;
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
     #ifdef DEBUG
@@ -13,29 +23,49 @@ void delivered(void *context, MQTTClient_deliveryToken dt) {
     #endif    
     deliveredtoken = dt;
 }
+void connlost(void *context, char *cause) {
+    printf("\nConnection lost\n");
+    printf("cause: %s\n", cause);
+}
+
+void calculations(float totaal_dagv,float totaal_dago,float totaal_nachtv,float totaal_nachto,float totaal_gas){
+    totaal_v += totaal_dagv + totaal_nachtv;
+    totaal_o += totaal_dago + totaal_nachto;
+    totaal_g += totaal_gas;
+}
+
+
 
 // This function is called upon when an incoming message from mqtt is arrived
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-    char *error_in = message->payload;
+    char *messageIn = message->payload;
+    printf( "Msg in : <%s>\n", messageIn );
+    sscanf("%s;%f;%f,%f;%f;%f,%f;%f;%f,%f", &time, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, &timeExtra, &totaal_gas);
+    if (i == 0){
+        printf("STARTWAARDEN\n\n");
+        printf("DATUM-TIJD: %s\nDAG\tTotaal verbruik\t = %f\nDAG\tTotaal opbrengst\t = %f\nNACHT\tTotaal verbruik\t = %f\nNACHT\tTotaal opbrengst\t = %f\nGAS\tTotaal verbruik\t = %f\n", time, totaal_dagv, totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
+        printf("-----------------------------------------------------------\nTOTALEN:\n-----------------------------------------------------------\n");
+    }
 
-    printf( "Msg in : <%s>\n", error_in );
-
-    // Create a new client to publish the message
-    MQTTClient client = (MQTTClient)context;
-    MQTTClient_message pubmsg = MQTTClient_message_initializer;
-    MQTTClient_deliveryToken token;
+    calculations(totaal_dagv,totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
+    printf("calculations: %f, %f, %f", totaal_v, totaal_o, totaal_g);
+    
 
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
-    
+    i++;
     return 1;
 }
 
-//connection lost
-void connlost(void *context, char *cause) {
-    printf("\nConnection lost\n");
-    printf("     cause: %s\n", cause);
-}
+
+
+
+
+
+
+
+
+
 
 
 int main() {

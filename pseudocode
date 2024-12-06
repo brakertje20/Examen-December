@@ -1,0 +1,14 @@
+connect with mosquitto broker
+if disconnected
+    print(error)
+declare totaal_dagv, totaal_nachtv, totaal_dago, totaal_nachto, i = 0, totaal_v = 0, totaal_o = 0
+receive message of mosquitto broker
+    
+    split message in 10 parts
+    if i == 0
+        print(all values)
+    if part 1,2,3,.. != 0
+        go to function for calcualations
+        function:
+            totaal_v = totaal_v
+    i++
