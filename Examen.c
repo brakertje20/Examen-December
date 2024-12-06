@@ -17,7 +17,8 @@ int tarief;
 float actueel_sp, actueel_sv;
 float totaal_dagv, totaal_nachtv, totaal_dago, totaal_nachto, totaal_v = 0, totaal_o = 0, totaal_g = 0, totaal_gas;
 char time[50], timeExtra[30];
-int i = 0, day, month, year, hh, mm, ss;
+int i = 0;
+//int day, month, year, hh, mm, ss;
 
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
@@ -33,18 +34,24 @@ void connlost(void *context, char *cause) {
 }
 
 void calculations(float totaal_dagv,float totaal_dago,float totaal_nachtv,float totaal_nachto,float totaal_gas){
-    totaal_v += totaal_dagv + totaal_nachtv;
-    totaal_o += totaal_dago + totaal_nachto;
-    totaal_g += totaal_gas;
+    totaal_v += (totaal_dagv + totaal_nachtv);
+    totaal_o += (totaal_dago + totaal_nachto);
+    totaal_g += (totaal_gas);
 }
 
 
 
 // This function is called upon when an incoming message from mqtt is arrived
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-    char *messageIn = message->payload;
-    printf( "Msg in : <%s>\n", messageIn );
-    sscanf("%d.%d.%d-%d:%d:%d;%f,%f;%f;%f,%f;%f;%s,%f", &day, &month, &year, &hh, &mm, &ss, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, &timeExtra, &totaal_gas);
+    char payload[256]; // Use a local array to avoid pointers directly
+    snprintf(payload, sizeof(payload), "%.*s", message->payloadlen, (char *)message->payload);
+    printf( "Msg in : <%s>\n", payload );
+    ///sscanf(payload ,"%d.%d.%d-%d:%d:%d;%f,%f;%f;%f,%f;%f;%s;%f", &day, &month, &year, &hh, &mm, &ss, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, &timeExtra, &totaal_gas);
+    sscanf(payload ,"%s;%d,%f;%f;%f,%f;%f;%f;%s;%f", time, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, timeExtra, &totaal_gas);
+
+    
+    
+
     if (i == 0){
         printf("STARTWAARDEN\n\n");
         printf("DATUM-TIJD: %s\nDAG\tTotaal verbruik\t = %f\nDAG\tTotaal opbrengst\t = %f\nNACHT\tTotaal verbruik\t = %f\nNACHT\tTotaal opbrengst\t = %f\nGAS\tTotaal verbruik\t = %f\n", time, totaal_dagv, totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
