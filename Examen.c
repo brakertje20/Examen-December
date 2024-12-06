@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <MQTTClient.h>
+#include <unistd.h>
+
 
 #define MAX_LINE_LEN	2048
 
@@ -9,12 +11,14 @@
 #define CLIENTID    "CFileReaderClient"
 #define TOPIC       "P1/MD10"            // Replace with your topic
 #define QOS         1
-#define TIMEOUT     10000L
+#define TIMEOUT     1000L
 volatile MQTTClient_deliveryToken deliveredtoken;
-float tarief, actueel_sp, actueel_sv;
+int tarief;
+float actueel_sp, actueel_sv;
 float totaal_dagv, totaal_nachtv, totaal_dago, totaal_nachto, totaal_v = 0, totaal_o = 0, totaal_g = 0, totaal_gas;
-char time[30]
-int i = 0;
+char time[50], timeExtra[30];
+int i = 0, day, month, year, hh, mm, ss;
+
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
     #ifdef DEBUG
@@ -40,7 +44,7 @@ void calculations(float totaal_dagv,float totaal_dago,float totaal_nachtv,float 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char *messageIn = message->payload;
     printf( "Msg in : <%s>\n", messageIn );
-    sscanf("%s;%f;%f,%f;%f;%f,%f;%f;%f,%f", &time, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, &timeExtra, &totaal_gas);
+    sscanf("%d.%d.%d-%d:%d:%d;%f,%f;%f;%f,%f;%f;%s,%f", &day, &month, &year, &hh, &mm, &ss, &tarief, &actueel_sv, &actueel_sp, &totaal_dagv, &totaal_nachtv, &totaal_dago, &totaal_nachto, &timeExtra, &totaal_gas);
     if (i == 0){
         printf("STARTWAARDEN\n\n");
         printf("DATUM-TIJD: %s\nDAG\tTotaal verbruik\t = %f\nDAG\tTotaal opbrengst\t = %f\nNACHT\tTotaal verbruik\t = %f\nNACHT\tTotaal opbrengst\t = %f\nGAS\tTotaal verbruik\t = %f\n", time, totaal_dagv, totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
@@ -50,6 +54,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     calculations(totaal_dagv,totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
     printf("calculations: %f, %f, %f", totaal_v, totaal_o, totaal_g);
     
+
 
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
@@ -80,17 +85,17 @@ int main() {
     conn_opts.cleansession = 1;
 
     MQTTClient_setCallbacks(client, client, connlost, msgarrvd, delivered);
-
+    printf("connecting to %s\n", ADDRESS);
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
         printf("Failed to connect, return code %d\n", rc);
         exit(EXIT_FAILURE);
     }
 
-    MQTTClient_subscribe(client, SUB_TOPIC, QOS);
+    MQTTClient_subscribe(client, TOPIC, QOS);
 
     // Keep the program running to continue receiving and publishing messages
     for(;;) {
-        delay(1);
+        sleep(1);
     }
 
     MQTTClient_disconnect(client, 10000);
