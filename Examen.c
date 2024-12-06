@@ -6,7 +6,7 @@
 
 
 #define MAX_LINE_LEN	2048
-//#define DEBUG // code works a bit when using manual input, error with the send code
+//#define DEBUG // code works a bit when using manual input, error with the send code script
 #define ADDRESS     "tcp://192.168.0.103:1883"  // Local RP MQTT broker address
 #define CLIENTID    "CFileReaderClient"
 #define TOPIC       "P1/MD10"            // Replace with your topic
@@ -18,8 +18,8 @@ char actueel_sp, actueel_sv;
 float totaal_dagv = 0, totaal_nachtv = 0, totaal_dago = 0, totaal_nachto = 0, totaal_v = 0, totaal_o = 0, totaal_g = 0, totaal_gas = 0;
 char time[50], timeExtra[30];
 int i = 0;
-//int day, month, year, hh, mm, ss;
-
+int day, month, year, hour, min, sec, dayCheck;
+char DD, MM, YY, hh, mm, ss;
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
     #ifdef DEBUG
@@ -36,8 +36,6 @@ void connlost(void *context, char *cause) {
 void calculations(totaal_dagv, totaal_dago, totaal_nachtv, totaal_nachto, totaal_gas){
 
     
-
-
     totaal_v += (totaal_dagv + totaal_nachtv);
     totaal_o += (totaal_dago + totaal_nachto);
     totaal_g += (totaal_gas * 11.55);
@@ -79,26 +77,58 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     char *timeExtra = token_str;
     token_str = strtok(NULL, ";");
     totaal_gasv = strtold(token_str, NULL);
-    
-    
-    if (i == 0){
-        printf("STARTWAARDEN\n\n");
-        printf("DATUM-TIJD: %s\nDAG\tTotaal verbruik\t = %s\nDAG\tTotaal opbrengst\t = %s\nNACHT\tTotaal verbruik\t = %s\nNACHT\tTotaal opbrengst\t = %s\nGAS\tTotaal verbruik\t = %ld\n", time, totaal_dagve, totaal_dagop,totaal_nachtve,totaal_nachtop,totaal_gasv);
-        printf("-----------------------------------------------------------\nTOTALEN:\n-----------------------------------------------------------\n");
-    }
+
+    //splitTime(time);
+
     totaal_dagv = atof(totaal_dagve);
     totaal_dago = atof(totaal_dagop);
     totaal_nachtv = atof(totaal_nachtve);
     totaal_nachto = atof(totaal_nachtop);
     totaal_gas = totaal_gasv;
 
+    //day = atoi(DD);
+    //month = atoi(MM);
+    //year = atoi(YY);
+    //hour = atoi(hh);
+    //min = atoi(mm);
+    //sec = atoi(ss);
+    
+
+
+
+    calculations(totaal_dagv,totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
+    if (payload == "00.00.00-00:00:00;0;0.000000;000.000000;0000;000000;0000.000000;000.000000;000.000000;00.00.00-00:00:00;0000.000000"){
+        calculations(totaal_dagv,totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
+        printf("Datum: %s\n--------------\nSTROOM:\n\tTotaal verbruik\t\t=\t%f kWh\n\tTotaal opbrengst\t=\t%f kWh\nGAS:\n\tTotaal verbruik\t\t=\t%ldkWh\n",time,totaal_v,totaal_o,totaal_g);
+
+        printf("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\nEinde van dit rapport\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    }
+    
+  
+  
+    if (i == 0){
+        printf("STARTWAARDEN\n\n");
+        printf("DATUM-TIJD: %s\nDAG\tTotaal verbruik\t\t = %s\nDAG\tTotaal opbrengst\t = %s\nNACHT\tTotaal verbruik\t\t = %s\nNACHT\tTotaal opbrengst\t = %s\nGAS\tTotaal verbruik\t\t = %ld\n", time, totaal_dagve, totaal_dagop,totaal_nachtve,totaal_nachtop,totaal_gasv);
+        printf("-----------------------------------------------------------\nTOTALEN:\n-----------------------------------------------------------\n");
+        
+    }
+    //else{
+        //if (hour == 00 && min == 00 && sec == 00)
+        //printf("Datum: %s\n--------------\nSTROOM:\n\tTotaal verbruik\t\t=\t%f kWh\n\tTotaal opbrengst\t=\t%f kWh\nGAS:\n\tTotaal verbruik\t\t=\t%ldkWh\n",time,totaal_v,totaal_o,totaal_g);
+        //totaal_v = 0;
+        //totaal_o = 0;
+        //totaal_g = 0;
+
+    //}
+    
+
+
     calculations(totaal_dagv,totaal_dago,totaal_nachtv,totaal_nachto,totaal_gas);
     #ifdef DEBUG
     printf("calculations: %f, %f, %ld\n", totaal_v, totaal_o, totaal_g);
     #endif
     
-    printf("Datum: %s\n--------------\nSTROOM:\n\tTotaal verbruik\t\t=\t%f kWh\n\tTotaal opbrengst\t=\t%f kWh\nGAS:\n\tTotaal verbruik\t\t=\t%ldkWh\n",time,totaal_v,totaal_o,totaal_g);
-
+    
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
     i++;
@@ -115,6 +145,21 @@ void logToFile(const char *in) {
     fclose(file);
 }
 
+void splitTime(time){
+    if (time != NULL) {
+        char *DD_MM_YY = strtok(time, "-");
+        char *hh_mm_ss = strtok(NULL, "-");
+
+        if (DD_MM_YY != NULL && hh_mm_ss != NULL) {
+            char *DD = strtok(DD_MM_YY, ".");
+            char *MM = strtok(NULL, ".");
+            char *yy = strtok(NULL, ".");
+            char *hh = strtok(hh_mm_ss, ":");
+            char *mm = strtok(NULL, ":");
+            char *ss = strtok(NULL, ":");
+        }
+    }
+}
 
 
 
@@ -125,8 +170,6 @@ void logToFile(const char *in) {
 
 
 int main() {
-   // Open MQTT client for listening
-    
     MQTTClient client;
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     int rc;
@@ -136,6 +179,7 @@ int main() {
     conn_opts.cleansession = 1;
 
     MQTTClient_setCallbacks(client, client, connlost, msgarrvd, delivered);
+    
     printf("connecting to %s\n", ADDRESS);
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
         printf("Failed to connect, return code %d\n", rc);

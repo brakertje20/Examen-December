@@ -3,12 +3,22 @@ if disconnected
     print(error)
 declare totaal_dagv, totaal_nachtv, totaal_dago, totaal_nachto, i = 0, totaal_v = 0, totaal_o = 0
 receive message of mosquitto broker
-    
+    write in file
     split message in 10 parts
+    strtok(),...
     if i == 0
         print(all values)
     if part 1,2,3,.. != 0
         go to function for calcualations
         function:
-            totaal_v = totaal_v
+        totaal_o += totaal_dago + totaal_nachto
+        totaal_v += totaal_dagv + totaal_nachtv
+        totaal_gem += totaal_g
+        if hh = 0 and mm = 0 and ss = 0
+            totaal_o = totaal_nachto - totaal_dago
+            totaal_v = totaal_nachtv - totaal_dagv
+            print(totaal_o en totaal_v)
+            alles = 0
     i++
+
+
