@@ -7,12 +7,12 @@
 
 #define DEBUG
 
-#define FILE_NAME		"/home/pi/Documents/Frank_Files/DigitaleMeter_temp.txt"
+#define FILE_NAME		"./DigitaleMeter_temp.txt"
 #define MAX_LINE_LEN	2048
 
-#define ADDRESS     "tcp://192.168.1.23:1883"  // Local RP MQTT broker address
+#define ADDRESS     "tcp://192.168.0.103:1883"  // Local RP MQTT broker address
 #define CLIENTID    "CFileReaderClient"
-#define TOPIC       "P1/MDx"            // Replace with your topic
+#define TOPIC       "P1/MD10"            // Replace with your topic
 #define QOS         1
 #define TIMEOUT     10000L
 
